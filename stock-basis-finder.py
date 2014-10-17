@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-"""TODO add file comment
-"""
+'''TODO add file comment
+'''
 
 import argparse
-import csv
 import logging
 import sys
 import traceback
@@ -25,49 +24,12 @@ DHIST_DATE_KEY = 'PayDate'
 DHIST_AMT_VAL = 'Amt'
 DHIST_DATE_FMT = '%d-%m-%Y'
 
-
-def process_price_csv(fname):
-    """Process the price history CSV and return the price history data structure.
-
-    Ensure the price history file is a CSV file and has the necessary columns.
-    Then build a list of dictionaries of dates to closing prices for each line
-    and return it.
-
-    Note: that since we are sensitive to the csv columns, we cannot just read in
-    the file straight with the csv.DictReader since it doesn't support stripping
-    off the BOM. We have to first read the characters in (which will strip off
-    the BOM) and then pass it to the DictReader via a StringIO. I'm open to
-    better suggestions.
-    """
-    #TODO move most of this logic into csv2dict.build_dict()
-    csv_reader = csv.DictReader(csv2dict.strip_bom(fname))
-
-    missing_fields = csv2dict.find_missing_csv_fields(csv_reader, [PHIST_DATE_KEY, PHIST_PRICE_VAL])
-    if missing_fields:
-        logging.error("The historical prices CSV is missing these column(s): %s", (", ".join(missing_fields)))
-        logging.error("Please ensure that the CSV contains these fields and try again")
-        sys.exit(1)
-
-    # Build the historical price dictionary
-    logging.debug('Building the price history dictionary...')
-    return csv2dict.build_dict(csv_reader, PHIST_DATE_KEY, PHIST_PRICE_VAL, PHIST_DATE_FMT, fname)
-
-def process_div_csv(fname):
-    """Process the dividend history CSV and return the dividend history data structure
-
-    Same as process_price_csv() but looking for dividend specific columns and a
-    different date format.
-    """
-    csv_reader = csv.DictReader(csv2dict.strip_bom(fname))
-
-    missing_fields = csv2dict.find_missing_csv_fields(csv_reader, [DHIST_DATE_KEY, DHIST_AMT_VAL])
-    if missing_fields:
-        logging.error("The dividend history CSV is missing these column(s): %s", (", ".join(missing_fields)))
-        logging.error("Please ensure that the CSV contains these fields and try again")
-        sys.exit(1)
-
-    logging.debug('Building the dividend history dictionary...')
-    return csv2dict.build_dict(csv_reader, DHIST_DATE_KEY, DHIST_AMT_VAL, DHIST_DATE_FMT, fname)
+# Constants for Split history CSV
+SHIST_DEFAULT = 'splits.csv'
+SHIST_DATE_KEY = 'split-date'
+SHIST_NEW_SHARES = 'new-shares'
+SHIST_OLD_SHARES = 'original-shares'
+SHIST_DATE_FMT = '%m-%d-%Y'
 
 if __name__ == "__main__":
 
@@ -78,6 +40,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Find cost-basis for an investment')
     parser.add_argument('-ph', '--price-history', metavar='<FILE>', type=str, default=PHIST_DEFAULT, help='CSV file that contains the daily price history for the investment (default=%s)' % PHIST_DEFAULT)
     parser.add_argument('-d', '--dividends', metavar='<FILE>', type=str, default=DHIST_DEFAULT, help='CSV file that contains the dividend history for the investment (default=%s)' % DHIST_DEFAULT)
+    parser.add_argument('-s', '--splits', metavar='<FILE>', type=str, default=SHIST_DEFAULT, help='CSV file that contains the split history for the investment (default=%s)' % SHIST_DEFAULT)
 
     #TODO add argument for split
 
@@ -87,14 +50,19 @@ if __name__ == "__main__":
         # Extract args
         hist_csv = args.price_history
         div_csv = args.dividends
+        split_csv = args.splits
         logging.debug('History File: %s', hist_csv)
         logging.debug('Dividend File: %s', div_csv)
+        logging.debug('Split File: %s', split_csv)
 
-        price_dict = process_price_csv(hist_csv)
-        div_dict = process_div_csv(div_csv)
+        price_dict = csv2dict.build_key_val_dict(hist_csv, PHIST_DATE_KEY, PHIST_PRICE_VAL, PHIST_DATE_FMT)
+        div_dict = csv2dict.build_key_val_dict(div_csv, DHIST_DATE_KEY, DHIST_AMT_VAL, DHIST_DATE_FMT)
+        split_dict = csv2dict.build_key_multi_val_dict(split_csv, SHIST_DATE_KEY, [SHIST_NEW_SHARES, SHIST_OLD_SHARES], SHIST_DATE_FMT)
+
 
         logging.debug('len(price_dict) = %d', len(price_dict))
         logging.debug('len(div_dict) = %d', len(div_dict))
+        logging.debug('len(split_dict) = %d', len(split_dict))
     except Exception as e:
         logging.debug(traceback.format_exc())
         logging.error(e)

@@ -68,7 +68,7 @@ A good site I've found that can get you the split history is [Get Split History]
 * Using the split info on the page, create a CSV file of the form with a new row for each split:
 ```
 split-date,new-shares,original-shares
-YYYY-MM-DD,#,#
+MM-DD-YYYY,#,#
 ```
 * For example, a 2:1 split on Oct. 1st, 1999 would look like this:
 ```

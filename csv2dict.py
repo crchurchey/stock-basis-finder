@@ -32,11 +32,19 @@ def _find_missing_csv_fields(dict_reader, field_list):
 
 def _get_csv_reader(fname, check_fields):
     '''Create the CSV reader object and check it for the passed in fields'''
-    csv_reader = csv.DictReader(_strip_bom(fname))
+    csv_reader = csv.DictReader(_strip_bom(fname), skipinitialspace=True)
     missing_fields = _find_missing_csv_fields(csv_reader, check_fields)
     if missing_fields:
         raise Exception('%s is missing these column(s): %s' % (fname, (', '.join(missing_fields))))
     return csv_reader
+
+def _get_date_key(date_str, date_fmt, fname):
+    try:
+        date_key = datetime.strptime(date_str, date_fmt).date()
+    except ValueError:
+        raise ValueError('Incorrect date format in %s. \'%s\' doesn\'t match %s' % (fname, date_str, date_fmt))
+
+    return date_key
 
 def build_key_val_dict(fname, dict_key, dict_val, date_fmt):
     '''Creates a dictionary from a CSV file fname from two columns in the file
@@ -61,10 +69,7 @@ def build_key_val_dict(fname, dict_key, dict_val, date_fmt):
 
     my_dict = dict()
     for item in csv_reader:
-        try:
-            date_key = datetime.strptime(item[dict_key], date_fmt).date()
-        except ValueError:
-            raise ValueError('Incorrect date format in %s. \'%s\' doesn\'t match %s' % (fname, item[date_key], date_fmt))
+        date_key = _get_date_key(item[dict_key], date_fmt, fname)
 
         # Make sure this date key hasn't been added before. If it has log the
         # warning but still update the existing key with the new value
@@ -87,10 +92,7 @@ def build_key_multi_val_dict(fname, dict_key, val_list, date_fmt):
 
     my_dict = dict()
     for item in csv_reader:
-        try:
-            date_key = datetime.strptime(item[dict_key], date_fmt).date()
-        except ValueError:
-            raise ValueError('Incorrect date format in %s. \'%s\' doesn\'t match %s' % (fname, item[date_key], date_fmt))
+        date_key = _get_date_key(item[dict_key], date_fmt, fname)
 
         # Make sure this date key hasn't been added before. If it has log the
         # warning but still update the existing key with the new value

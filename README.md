@@ -25,26 +25,27 @@ We can "reverse engineer" the cost-basis given the following information about t
 You will need to provide this info in order to find your investment's cost-basis. You should already know the number of shares you own and you can find everything else on the intertubes!
 
 ##### Historical Prices
-I recommend [Google Finance](http://finance.google.com/) for the historical prices:
-* Goto http://finance.google.com
+I recommend [Yahoo Finance](http://finance.yahoo.com/) for the historical prices (Google will only export 4000 records at a time which makes things more complicated if you need more records than that):
+* Goto http://finance.yahoo.com
 * Enter your investment ticker symbol in the search box and hit enter
 * In the left-side-bar click 'Historical prices'
 * Enter an appropriate start date (i.e one that you are confident is prior to the original purchase date of the investment)
 * Leave the end date as the current date
-* Click 'Update'
-* On the right-side of the page click 'Download to Spreadsheet' and save the CSV file to your hard drive (ex. history.csv)
+* Make sure the 'Daily' radio button is selected
+* Click 'Get Prices'
+* At the bottom of the page click 'Download to Spreadsheet' and save the CSV file to your hard drive (ex. prices.csv)
 
 If you want to get the historical info from somewhere else, that is OK but make sure the CSV file includes a header line and is in this format:
 ```
 Date,Close
-dD-MMM-YY,##.##
+YYYY-MM-DD,##.##
 ```
 Example file:
 ```
 Date,Close
-1-Oct-14,12.34
-08-Feb-01,12.30
-10-Jan-98,12.00
+2014-10-01,12.34
+2001-02-08,12.30
+1998-01-10,12.00
 ```
 Note that any number or arrangement of the columns in the CSV are acceptable but the CSV must have at least a 'Date' and 'Close' column.
 
@@ -120,3 +121,13 @@ OrigShares = \frac{PayDatePrice \times CurShares}{PayDatePrice + Dividend}
 ![equation](http://latex.codecogs.com/gif.latex?OrigShares%20%3D%20%5Cfrac%7BPayDatePrice%20%5Ctimes%20CurShares%7D%7BPayDatePrice%20+%20Dividend%7D)
 
 Now that we have an equation to work with we just need to work backwards through each dividend until `OrigShares` converges to 0 or we reach a date that we know is too far back.
+
+## Disclaimer
+The author of this application is not and does not claim to be any of the following:
+* Tax Advisor/Expert
+* Fiduciary
+* Financial Advisor of any sort (Fiduciary, CFP, etc.)
+* Investment Advisor/Expert
+* Attorney/Lawyer of any sort
+
+This software can aid in finding the approximate purchase date as well as the cost-basis of investments. You may use the info this application outputs in any way you see fit but the author is not liable for any legal issues that may arise from using the data the application outputs.

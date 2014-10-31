@@ -83,9 +83,13 @@ if __name__ == "__main__":
 
     # Create new dictionary that contains both dividends and splits
     div_splits_dict = dict()
+
+    # Add dividends to the new dictionary
     for date_key in div_dict.keys():
         tmp_dict = {DIV_KEY: div_dict[date_key]}
         div_splits_dict[date_key] = tmp_dict
+
+    # Add splits to the new dictionary
     for date_key in split_dict.keys():
         if div_splits_dict.has_key(date_key):
             div_splits_dict[date_key][SPLIT_KEY] = split_dict[date_key]
@@ -93,11 +97,16 @@ if __name__ == "__main__":
             tmp_dict = {SPLIT_KEY: split_dict[date_key]}
             div_splits_dict[date_key] = tmp_dict
 
-    # loop over the dividends and splits
-    sorted_date_keys = div_splits_dict.keys()
-    sorted_date_keys.sort(reverse=True)
-    calc_shares = cur_shares
-    for date_key in sorted_date_keys:
+    # loop over the dividends and splits, sort the keys (i.e. the dates). While 
+    # looping, build a dictionary that maps dates to a tuple of the shares owned
+    # on that date and their total value
+    sorted_div_splits_keys = div_splits_dict.keys()
+    sorted_div_splits_keys.sort(reverse=True) # to iterate in order over div/splits
+    share_val_hist_dict = dict() # date => (shares, value)
+    sorted_price_keys = price_dict.keys()
+    sorted_price_keys.sort(reverse=True) # to iterate in order over the price history
+    spk_ndx = 0 # index into current unprocessed sorted_price_key
+    for date_key in sorted_div_splits_keys:
         # Sometimes dividend pay dates may fall on weekends or holidays so search
         # for the next price history if possible (within reason)
         done = False
@@ -105,18 +114,41 @@ if __name__ == "__main__":
         while not done and day_displacement < 10:
             tmp_key = date_key + datetime.timedelta(days=day_displacement)
             try:
-                price = price_dict[tmp_key]
+                cur_date = tmp_key
+                cur_price = price_dict[tmp_key]
                 done = True
             except KeyError:
                 # Add one to the day displacement and try again
-                day_displacement+=1
+                day_displacement += 1
+
+        # If we maxed out the date search, throw exception
         if day_displacement == 10:
             raise Exception('Couldn\'t find the next valid price history date after %s', date_key)
 
-        # First check for dividends and process them first
+        # first fill in the share value history since last dividend/split (or start)
+        while (spk_ndx < len(sorted_price_keys)) and (sorted_price_keys[spk_ndx] > cur_date):
+            new_date = sorted_price_keys[spk_ndx]
+            new_valu = cur_shares * price_dict[sorted_price_keys[spk_ndx]]
+            
+            # check to see if there are whole number value
+            if round(new_valu, 2).is_integer():
+                print 'Possible whole value: %s: %f' % (new_date, new_valu)
+
+            # check to see if there are a whole number of shares
+            rounded_shares = round(cur_shares, 1)
+            if rounded_shares.is_integer():
+                print 'Possible whole share: %s: %f' % (date_key, cur_shares)
+
+            share_val_hist_dict[new_date] = (cur_shares, new_valu)
+            spk_ndx += 1
+
+        # Check for dividends and process them first 
+        # Note that generally companies do not schedule splits and dividends around
+        # the same time so we do not handle the complicated logic of when a
+        # split and dividend occur around the same time                                                                                                                                                                                                                                                                                     )
         if div_splits_dict[date_key].has_key(DIV_KEY):
             div_amt = div_splits_dict[date_key][DIV_KEY]
-            cur_shares = (price * cur_shares) / (price + div_amt)
+            cur_shares = (cur_price * cur_shares) / (cur_price + div_amt)
 
         # Now see if there are splits to process
         if div_splits_dict[date_key].has_key(SPLIT_KEY):
@@ -124,4 +156,13 @@ if __name__ == "__main__":
             new_shares = float(div_splits_dict[date_key][SPLIT_KEY][SHIST_NEW_SHARES])
             cur_shares *= orig_shares / new_shares
 
-        print cur_shares
+    # complete the share value history since last one
+    while (spk_ndx < len(sorted_price_keys)):
+        new_date = sorted_price_keys[spk_ndx]
+        new_valu = cur_shares * price_dict[sorted_price_keys[spk_ndx]]
+        if round(new_valu, 1).is_integer():
+            print 'Possible while value: %s: %f' % (new_date, new_valu)
+        share_val_hist_dict[new_date] = (cur_shares, new_valu)
+        spk_ndx += 1
+
+    logging.debug('len(share_val_hist_dict) = %d', len(share_val_hist_dict))

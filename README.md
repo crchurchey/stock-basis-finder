@@ -3,17 +3,7 @@ Stock Basis Finder
 
 You may own or have inherited an investment that for some reason you don't have the original investment certificate for and hence don't know the cost-basis with dividends and stock splits factored in. This is a problem if you want to sell the investment since the IRS (US) will levy taxes on any gains the investment made. This tool can help you find the cost-basis of your investment.
 
-## Assumptions
-I know it seems like a lot of assumptions but hopefully with time I can remove a lot of these by adding new features.
-* All investment purchases had no fees*
-* The investment is set up in a [DRiP](http://en.wikipedia.org/wiki/Dividend_reinvestment_plan) (All dividends automatically reinvested)
-* Cash type dividends were the only dividends paid out during your ownership of the investment
-* All purchases were done at the closing price*
-* No other lots (aside from the initial investment and reinvested dividends) were bought*
-* The investment did not contain any capital gains distributions*
- * This is mainly important for mutual/index funds
-
-\* Future features may be added to remove this assumption...stay tuned
+See the [Stock Basis Finder Wiki](https://github.com/crchurchey/stock-basis-finder/wiki) for more in-depth info on this application.
 
 ## What is needed?
 We can "reverse engineer" the cost-basis given the following information about the investment:
@@ -76,51 +66,6 @@ MM-DD-YYYY,#,#
 split-date,new-shares,original-shares
 10-01-1999,2,1
 ```
-
-## How does it work?
-With the data that you provide above, we can work backwards from today and figure out lot purchase prices and number of shares bought. In order to find the basis, we need to figure out the cost of each lot bought (all shares of an investment bought in a single transaction at the same share price are considered a lot). Here is the formula:
-
-<!--
-Built this formula here: http://latex.codecogs.com/eqneditor/editor.php
-
-OrigShares \times Dividend = Cash = NewShares \times PayDatePrice
--->
-
-![equation](http://latex.codecogs.com/gif.latex?OrigShares%20%5Ctimes%20Dividend%20%3D%20Cash%20%3D%20NewShares%20%5Ctimes%20PayDatePrice)
-
-So...
-
-<!--
-OrigShares \times Dividend = NewShares \times PayDatePrice
--->
-
-![equation](http://latex.codecogs.com/gif.latex?OrigShares%20%5Ctimes%20Dividend%20%3D%20NewShares%20%5Ctimes%20PayDatePrice)
-
-We know the `Dividend` and we know the `PayDatePrice` but we don't know the `NewShares` and we are after the `OrigShares`. We do know this though:
-
-<!--
-NewShares = CurrentShares - OrigShares
--->
-
-![equation](http://latex.codecogs.com/gif.latex?NewShares%20%3D%20CurrentShares%20-%20OrigShares)
-
-Now we can replace `NewShares` in the previous equation:
-
-<!--
-OrigShares \times Dividend = (CurrentShares - OrigShares) \times PayDatePrice
--->
-
-![equation](http://latex.codecogs.com/gif.latex?OrigShares%20%5Ctimes%20Dividend%20%3D%20%28CurrentShares%20-%20OrigShares%29%20%5Ctimes%20PayDatePrice)
-
-Now the only variable we don't know is `OrigShares` so solve for it. If we trust [WolframAlpha](http://www.wolframalpha.com/input/?i=solve+X*Y+%3D+%28Z-X%29*A+for+X) we get:
-
-<!--
-OrigShares = \frac{PayDatePrice \times CurShares}{PayDatePrice + Dividend}
--->
-
-![equation](http://latex.codecogs.com/gif.latex?OrigShares%20%3D%20%5Cfrac%7BPayDatePrice%20%5Ctimes%20CurShares%7D%7BPayDatePrice%20+%20Dividend%7D)
-
-Now that we have an equation to work with we just need to work backwards through each dividend until `OrigShares` converges to 0 or we reach a date that we know is too far back.
 
 ## Disclaimer
 The author of this application is not and does not claim to be any of the following:
